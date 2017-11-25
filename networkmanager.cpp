@@ -7,6 +7,8 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QJsonDocument>
+#include <QFile>
+#include <QTextStream>
 
 NetworkManager::NetworkManager(QObject *parent) : QObject(parent)
 {
@@ -98,9 +100,21 @@ QString NetworkManager :: replyFinished(QNetworkReply *reply){
           }
       }
 
-      for (int i=0; i<graphValues.size(); i++){
-              data = graphValues[i];
-        //      qDebug()<<data.first <<" - "<<data.second;
-          }
+
+
+      //write data to file
+      QString filename="D:\\Data.txt";
+      QFile file( filename );
+      if ( file.open(QIODevice::ReadWrite) )
+      {
+          for (int i=0; i<graphValues.size(); i++){
+                  data = graphValues[i];
+                  QTextStream stream( &file );
+                  stream << data.first <<" - "<<data.second << "\r\n";
+            //      qDebug()<<data.first <<" - "<<data.second;
+              }
+
+      }
+
       return strReply;
 }
