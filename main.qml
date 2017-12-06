@@ -8,58 +8,249 @@ ApplicationWindow {
     width: 640
     height: 480
     title: qsTr("Hello World")
+    id: window
 
+    Connections {
+        target: Manager
+        onValueUpdated: {
+            series.append(x, y)
+            if (x > xAxis.max) {
+                xAxis.max = x
+            }
+            if (y > yAxis.max) {
+                yAxis.max = y
+            }
+        }
 
-    Button {
-        id: pressbutton
-        x: 59
-        y: 47
-        text: qsTr("Press Here")
-        spacing: -1
+        onValueUpdated2: {
+            series2.append(x, y)
+            if (x > xAxis2.max) {
+                xAxis2.max = x
+            }
+            if (y > yAxis2.max) {
+                yAxis2.max = y
+            }
+        }
 
-
-        onPressed: {
-
-
-           textarea.append(manager.loadWebPage());
-            thechart.visible = false;
-
-       }
-    }
-
-    TextArea {
-        id: textarea
-        x: 33
-        y: 122
-        width: 538
-        height: 268
-        text: qsTr("Text Area")
-
-
-    }
-
-    Button {
-        id: btnchart
-        x: 417
-        y: 47
-        text: qsTr("Show Chart")
-
-        onPressed: {
-
-             thechart.visible = true;
+        onValueUpdated3: {
+            y = y/1000000
+            series3.append(x, y)
+            if (x > xAxis3.max) {
+                xAxis3.max = x
+            }
+            if (y > yAxis3.max) {
+                yAxis3.max = y
+            }
         }
     }
 
-    ChartView{
-
-        id: thechart
-        x: 40
-        y: 122
-        width: 538
-        height: 268
-        clip: false
+    ColumnLayout {
+        id: columnLayout
+        anchors.fill: parent
+        anchors.topMargin: 100
         visible: false
+
+        RowLayout {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 10
+            Text {
+                id: text1
+                color: "#e91e1e"
+                text: qsTr("Open Values")
+                z: 1
+                font.italic: true
+                font.pointSize: 20
+            }
+        }
+    }
+
+    ChartView {
+        id: chartView
+        title: "Open Values chart"
+        anchors.fill: parent
+        anchors.topMargin: 100
+        theme: ChartView.ChartThemeLight
+        visible: false
+        ValueAxis {
+            id: yAxis
+            titleText: "y"
+            titleVisible: true
+            gridVisible: true
+            tickCount: 11
+            min: 0
+            max: 87
+        }
+
+        ValueAxis{
+            id: xAxis
+            min: 0
+            max: 100
+        }
+
+        LineSeries {
+            id: series
+            axisX: xAxis
+            axisY: yAxis
+            name: "Open values series"
+            visible: true
+        }
 
     }
 
+    ColumnLayout {
+        id: columnLayout2
+        anchors.fill: parent
+        anchors.topMargin: 100
+        visible: false
+
+        RowLayout {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 10
+            Text {
+                id: text2
+                color: "#e91e1e"
+                text: qsTr("High Values")
+                z: 1
+                font.italic: true
+                font.pointSize: 20
+            }
+        }
+    }
+
+    ChartView {
+        id: chartView2
+        title: "high Values chart"
+        anchors.fill: parent
+        anchors.topMargin: 100
+        theme: ChartView.ChartThemeLight
+        visible: false
+        ValueAxis {
+            id: yAxis2
+            titleText: "y"
+            titleVisible: true
+            gridVisible: true
+            tickCount: 11
+            min: 0
+            max: 87
+        }
+
+        ValueAxis{
+            id: xAxis2
+            min: 0
+            max: 100
+        }
+
+        LineSeries {
+            id: series2
+            axisX: xAxis2
+            axisY: yAxis2
+            name: "high values series"
+            visible: true
+        }
+
+    }
+
+    ColumnLayout {
+        id: columnLayout3
+        anchors.fill: parent
+        anchors.topMargin: 100
+        visible: false
+
+        RowLayout {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 10
+            Text {
+                id: text3
+                color: "#e91e1e"
+                text: qsTr("High Values")
+                z: 1
+                font.italic: true
+                font.pointSize: 20
+            }
+        }
+    }
+
+    ChartView {
+        id: chartView3
+        title: "volume Values chart"
+        anchors.fill: parent
+        anchors.topMargin: 100
+        theme: ChartView.ChartThemeLight
+        visible: false
+        ValueAxis {
+            id: yAxis3
+            titleText: "y"
+            titleVisible: true
+            gridVisible: true
+            tickCount: 11
+            min: 0
+            max: 87
+        }
+
+        ValueAxis{
+            id: xAxis3
+            min: 0
+            max: 100
+        }
+
+        LineSeries {
+            id: series3
+            axisX: xAxis3
+            axisY: yAxis3
+            name: "Volume values series"
+            visible: true
+        }
+
+    }
+
+    Button {
+        id: button
+        x: 61
+        y: 27
+        text: qsTr("show open values")
+
+        onClicked: {
+            chartView.visible = true
+            columnLayout.visible = true
+            chartView2.visible = false
+            columnLayout2.visible = false
+            chartView3.visible = false
+            columnLayout3.visible = false
+        }
+    }
+
+    Button {
+        id: button1
+        x: 263
+        y: 27
+        text: qsTr("show high values")
+
+        onClicked: {
+            chartView.visible = false
+            columnLayout.visible = false
+            chartView2.visible = true
+            columnLayout2.visible = true
+            chartView3.visible = false
+            columnLayout3.visible = false
+        }
+    }
+
+    Button {
+        id: button2
+        x: 461
+        y: 27
+        text: qsTr("Show volume values")
+
+        onClicked: {
+            chartView.visible = false
+            columnLayout.visible = false
+            chartView2.visible = false
+            columnLayout2.visible = false
+            chartView3.visible = true
+            columnLayout3.visible = true
+        }
+    }
 }

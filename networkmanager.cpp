@@ -1,120 +1,105 @@
 #include "networkmanager.h"
-#include "QNetworkAccessManager"
-#include <QtNetwork>
-#include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QDebug>
-#include <QJsonDocument>
+#include <QNetworkRequest>
+
+#include <QDir>
 #include <QFile>
-#include <QTextStream>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QObject>
 
 NetworkManager::NetworkManager(QObject *parent) : QObject(parent)
 {
 
-
+    manager= new QNetworkAccessManager();
+    connect(manager,SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
 }
 
-QString NetworkManager ::loadWebPage(){
-    // Now parse this JSON according to your needs !
-   manager = new QNetworkAccessManager(this);
 
-   manager->setNetworkAccessible(QNetworkAccessManager::Accessible);
+void NetworkManager::loadWebPage(){
     QNetworkRequest request;
-   QEventLoop eventloop;
 
-   QString apiKey ="demo";
+    QString apikey = "demo";
 
-   QString urlstring = QString ("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=MSFT&interval=1min&apikey=%0").arg(apiKey);
+    QString urlString = QString("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=MSFT&apikey=%0").arg(apikey);
 
-   QUrl url(urlstring);
+    QUrl url(urlString);
+    request.setUrl(url);
 
-   request.setUrl(url);
-
-   QNetworkReply *reply = manager->get(request);
-
-   connect(reply, SIGNAL(finished()), &eventloop, SLOT(quit()));
-
-   eventloop.exec();
-
-    return replyFinished(reply);
-
+    QNetworkReply *reply = manager->get(request);
 }
 
 
-QString NetworkManager :: replyFinished(QNetworkReply *reply){
+void NetworkManager::replyFinished(QNetworkReply *reply)
+{
+    QByteArray webData = reply->readAll();
 
 
-  //QByteArray webData= reply->readAll();
- // QString webDataString = QString(webData);
-  // qDebug()<<webDataString;
+    QList<QPair<QString,QString>> graphValuesopen;
+    QList<QPair<QString,QString>> graphValueshigh;
+    QList<QPair<QString,QString>> graphValuesvolume;
 
-  // QStringList propertyNames;
-   //QStringList propertyKeys;
-   QString strReply = (QString)reply->readAll();
-   QJsonDocument jsonResponse = QJsonDocument::fromJson(strReply.toUtf8());
+    QJsonDocument doc = QJsonDocument::fromJson(webData);
 
-   QJsonObject jsonObject = jsonResponse.object();
+    if(doc.isArray()==true){
+        QJsonArray rootArray = doc.array();
+    }
 
+    else if (doc.isObject() == true){
 
-   QJsonObject jsondataObject = jsonObject["Meta Data"].toObject();
-   qDebug() << "some info" << jsondataObject["1. Information"].toString();
+        QJsonObject rootObject = doc.object();
 
- //  QJsonObject jsontimeobject = jsonObject["Time Series (1min)"].toObject();
- //  QJsonObject jsondayobject = jsontimeobject["2017-11-24 10:33:00"].toObject();
-  // qDebug() << "some info" << jsondayobject["1. open"].toString();
+        QJsonObject timeSeries = rootObject["Time Series (Daily)"].toObject();
+        QStringList keys = timeSeries.keys();
 
+        for (QString k :keys){
+            QJsonObject dayValues = timeSeries[k].toObject();
+            QString openValue = dayValues["1. open"].toString();
+            QString highValue = dayValues["2. high"].toString();
+            QString volumeValue = dayValues["5. volume"].toString();
 
-   //QByteArray webDatatwo = reply->readAll();
+            QPair<QString,QString> dataItem;
+            QPair<QString,QString> dataItem2;
+            QPair<QString,QString> dataItem3;
 
-      QList<QPair<QString,QString>> graphValues;
+            dataItem.first = k;
+            dataItem.second = openValue;
 
-       QPair<QString,QString> data;
+            dataItem2.first = k;
+            dataItem2.second = highValue;
 
-      //QString webDataString = QString(webData);
-
-      QJsonDocument documenttwo = QJsonDocument::fromJson(strReply.toUtf8());
-
-      if(documenttwo.isArray() == true){
-          //retreive the array
-          QJsonArray rootArray = documenttwo.array();
-      }
-
-      else if(documenttwo.isObject() == true)
-      {
-
-          QJsonObject rootObject = documenttwo.object();
-
-          QJsonObject timeSeries = rootObject["Time Series (1min)"].toObject();
-          QStringList keys = timeSeries.keys();
-          for (QString k : keys){
-              QJsonObject dayValues = timeSeries[k].toObject();
-              QString openValue =  dayValues["2. high"].toString();
-
-              QPair<QString,QString> dataItem;
-              dataItem.first = k;
-              dataItem.second = openValue;
-
-              graphValues.append(dataItem);
-          }
-      }
+            dataItem3.first = k;
+            dataItem3.second = volumeValue;
 
 
 
-      //write data to file
-      QString filename="D:\\Data.txt";
-      QFile file( filename );
-      if ( file.open(QIODevice::ReadWrite) )
-      {
-          for (int i=0; i<graphValues.size(); i++){
-                  data = graphValues[i];
-                  QTextStream stream( &file );
-                  stream << data.first <<" - "<<data.second << "\r\n";
-            //      qDebug()<<data.first <<" - "<<data.second;
-              }
+            graphValuesopen.append(dataItem);
+            graphValueshigh.append(dataItem2);
+            graphValuesvolume.append(dataItem3);
 
-      }
+            }
 
-      return strReply;
+    }
+    for (int i=0; i<graphValuesopen.size(); i++){
+        QPair<QString,QString> data = graphValuesopen[i];
+        float list=data.second.toFloat();
+        emit valueUpdated(QVariant(i),QVariant(list));
+        qDebug()<<data.second;
+    }
+
+    for (int i=0; i<graphValueshigh.size(); i++){
+        QPair<QString,QString> data = graphValueshigh[i];
+        float list=data.second.toFloat();
+        emit valueUpdated2(QVariant(i),QVariant(list));
+    }
+
+    for (int i=0; i<graphValuesvolume.size(); i++){
+        QPair<QString,QString> data = graphValuesvolume[i];
+        float list=data.second.toFloat();
+        emit valueUpdated3(QVariant(i),QVariant(list));
+    }
+
+
 }
+

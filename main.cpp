@@ -1,8 +1,9 @@
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
+#include "networkmanager.h"
+
 #include <QApplication>
-#include<networkmanager.h>
+#include <QQmlApplicationEngine>
 #include <QQmlContext>
+
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -13,9 +14,11 @@ int main(int argc, char *argv[])
     if (engine.rootObjects().isEmpty())
         return -1;
 
-    NetworkManager manger;
+    NetworkManager* manager = new NetworkManager();
 
-     engine.rootContext()->setContextProperty("manager",&manger);
+    manager->loadWebPage();
+
+    engine.rootContext()->setContextProperty("Manager", manager);
 
     return app.exec();
 }
